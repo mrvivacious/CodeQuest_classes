@@ -1,0 +1,43 @@
+<!doctype html>
+<!--
+ This page is shown when the extension button is clicked, because the
+ "browser_action" field in manifest.json contains the "default_popup" key with
+ value "popup.html".
+ -->
+<html>
+
+<head>
+  <title>Facebook scraper</title>
+
+  <link href="styles.css" rel="stylesheet" type="text/css"/>
+
+  <!--
+      - JavaScript and HTML must be in separate files: see our Content Security
+      - Policy documentation[1] for details and explanation.
+      -
+      - [1]: https://developer.chrome.com/extensions/contentSecurityPolicy
+    -->
+  <script src="jquery.min.js"></script>
+  <script src="scraper.js"></script>
+
+</head>
+
+<body>
+  <h1>Web Scraper</h1>
+  <div id="container">
+
+      <div class="vertical-menu">
+          <!-- <div id="nameForm">
+            <input id="INPUT_name" type="text" name="Your name?" placeholder="What's your name?" value="">
+            <button id="submitName" type="submit" name="button">Save!</button>
+          </div> -->
+
+          <hr>
+          <p id="notifications">blahblah</p>
+          <p><span id="weather">000</span> degrees F</p>
+          <p id="friendReq">No friend requests</p>
+      </div>
+  </div>
+</body>
+
+</html>
