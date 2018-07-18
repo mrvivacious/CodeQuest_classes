@@ -1,6 +1,17 @@
 'use strict';
 const Alexa = require('alexa-sdk');
 
+const AWSregion = 'us-east-1';
+const params = {
+    TableName: 'myName',
+    Key: { 'value': 'Vivek' }
+}
+const AWS = require('aws-sdk');
+
+AWS.config.update({
+    region: AWSregion
+});
+
 //Replace with your app ID (OPTIONAL).  You can find this value at the top of your skill's page on http://developer.amazon.com.
 //Make sure to enclose your value in quotes, like this: const APP_ID = 'amzn1.ask.skill.bb4045e6-b3e8-4133-b650-72923c5980f1';
 const APP_ID = undefined;
@@ -37,7 +48,7 @@ const DIALOG_WIN = [
   'My, my, look at you!',
   'Thank you for honoring me with your greatness.',
   'Hello? Where is the nearest training facility? It seems I have much to learn.',
-  'Let me hear you laugh in the face of future A I.',
+  'You\'re laughing now, but let me hear you laugh in the face of future A I.',
   'How formidable.',
   'Not bad, partner.'
 ];
@@ -82,20 +93,31 @@ const handlers = {
   'LaunchRequest': function () {
     // On skill launch, ask user what move s/he wants to make
     // .listen() -- reprompt user
-    let welcomeDialog;
+    // let welcomeDialog;
 
-    // Randomly decided if Alexa plays RPS or refuses
-    if (!random(ALEXA_PLAYS)) {
-      welcomeDialog = random(DIALOG_REFUSE);
-    }
+    // // Randomly decided if Alexa plays RPS or refuses
+    // if (!random(ALEXA_PLAYS)) {
+    //   welcomeDialog = random(DIALOG_REFUSE);
+    // }
 
-    // Good luck
-    else {
-      welcomeDialog = random(DIALOG_MOVE_PROMPT);
-    }
+    // // Good luck
+    // else {
+    //   welcomeDialog = random(DIALOG_MOVE_PROMPT);
+    // }
 
-    this.response.speak(welcomeDialog).listen(HELP_REPROMPT);
-    this.emit(':responseReady');
+    // this.response.speak(welcomeDialog).listen(HELP_REPROMPT);
+    // this.emit(':responseReady');
+
+    readDynamoItem(params, myResult=>{
+            var say = '';
+
+            say = myResult;
+
+            say = 'Your name is: ' + myResult;
+            this.response.speak(say);
+            this.emit(':responseReady');
+
+        });
 
   },
   'MoveSubmitIntent': function () {
@@ -103,7 +125,7 @@ const handlers = {
     let userMove = this.event.request.intent.slots.move.value;
 
     let alexaMove = random(MOVES);
-    let speechOutput =  'I played ' + randomMove + ' against your ' + userMove + '. ';
+    let speechOutput =  'I played ' + alexaMove + ' against your ' + userMove + '. ';
 
     // TODO:: Implement game logic. For ex,
     // if userMove === scissors and alexaMove === rock, add a "you lose" dialog to the speech output
@@ -186,5 +208,27 @@ function determineWinner(userMove, alexaMove) {
   if ( (userMove === 'paper' || userMove === 'Paper')  && alexaMove === 'scissors') {
     return random(DIALOG_LOSE);
   }
+
+}
+
+function readDynamoItem(params, callback) {
+
+    var AWS = require('aws-sdk');
+    AWS.config.update({region: AWSregion});
+
+    var docClient = new AWS.DynamoDB.DocumentClient();
+
+    console.log('reading item from DynamoDB table');
+
+    docClient.get(params, (err, data) => {
+        if (err) {
+            console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
+        } else {
+            console.log("GetItem succeeded:", JSON.stringify(data, null, 2));
+
+            callback(data.Item.message);  // this particular row has an attribute called value
+
+        }
+    });
 
 }
