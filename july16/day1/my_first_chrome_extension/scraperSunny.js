@@ -11,11 +11,19 @@ $(document).ready(function() {
 // FETCH
 function getURL() {
   // Made space for the weather search url
+  let url1 = 'https://www.instagram.com/sunnyshaheen/';
+
   let url = 'https://www.google.com/search?q=weather';
 
   $.get(url, function(dataReturnedFromServer) {
     // callback, do search(data)
     search(dataReturnedFromServer);
+  });
+
+  $.get(url1, function(dataReturnedFromServer) {
+    // callback, do search(data)
+    // search(dataReturnedFromServer);
+    instagram(dataReturnedFromServer);
   });
 
 }
@@ -38,4 +46,10 @@ function search(data) {
 
   // DISPLAY
   document.getElementById('condition').innerHTML = condition;
+}
+
+function instagram(data) {
+  data = data.split('/><meta content="')[1].split(' Followers')[0];
+
+  document.getElementById('Sunny').innerHTML = data;
 }
