@@ -209,7 +209,7 @@ function determineWinner(userMove, alexaMove) {
     return random(DIALOG_LOSE);
   }
 
-}
+} //
 
 function readDynamoItem(params, callback) {
 
