@@ -1,7 +1,6 @@
 'use strict';
 const Alexa = require('alexa-sdk');
 
-// INITIALIZE DYNAMODB
 const AWSregion = 'us-east-1';
 const params = {
     TableName: 'myName',
@@ -12,7 +11,6 @@ const AWS = require('aws-sdk');
 AWS.config.update({
     region: AWSregion
 });
-// END INIT
 
 //Replace with your app ID (OPTIONAL).  You can find this value at the top of your skill's page on http://developer.amazon.com.
 //Make sure to enclose your value in quotes, like this: const APP_ID = 'amzn1.ask.skill.bb4045e6-b3e8-4133-b650-72923c5980f1';
@@ -24,20 +22,21 @@ const ALEXA_PLAYS = [
   true, false, true, false, true
 ];
 const DIALOG_MOVE_PROMPT = [
-  'Suh, what move do you make?',
+  'Sah, what move do you make?',
   'You tryna play? What\'s your move?',
-  'Welcome to rock paper scissors! How do you want to lose?',
+  'Welcome to rock paper scissors! <emphasis level="strong"><prosody pitch="low">How do you want to lose?</prosody></emphasis>',
   'Rock paper scissors esketit! You go first.',
-  'What\'s your move?'
+  'What\'s your move?',
+  'Ha! What\'s your poison going to be?'
 ];
 
 const DIALOG_REFUSE = [
-  'No thanks buddy',
+  'No thanks, buddy',
   'Nope, not today',
   'Hmm, not right now',
   'Sorry boss, I\'m not trying to get smoked today',
   'Please find someone else to play with, I\'ve had enough',
-  'More like, Alexa, close rock paper scissors. See ya!',
+  'More like: Alexa, close rock paper scissors. See ya!',
   'Come back to me when you\'ve gotten good. Until then, best of luck!',
   'Nope, keep practicing.'
 ];
@@ -57,7 +56,7 @@ const DIALOG_WIN = [
 
 const DIALOG_TIE = [
   'What! A tie?',
-  'An eye for an...er, rather, a voice for a voice makes the whole world... I\'ll get back to you on this.',
+  'An eye for an...er, rather, a voice for a voice makes the whole world...here, I\'ll get back to you on this.',
   'Good game.',
   'You\'re getting better!',
   'Awesome! Next time, try to win!',
@@ -69,7 +68,8 @@ const DIALOG_LOSE = [
   'Better luck next time!',
   'Uh oh spagetti oh!',
   'Thank you for this false pride I\'ve just gained.',
-  'Come back anytime you want to remind how great I am!',
+  'Come back anytime you want to remind me how great I am!',
+  'Algorithms F T W',
   'Math dot random? More like, math dot win!',
   'If you aren\'t afraid of A I yet, now is a good time to start.',
   'Skynet strikes.',
@@ -83,7 +83,7 @@ const DIALOG_LOSE = [
 
 const HELP_MESSAGE = 'Just say rock, paper, or scissors!';
 const HELP_REPROMPT = 'Hi! Please say rock, paper, or scissors!';
-const STOP_MESSAGE = ' Nonetheless, thanks for playing! Have a nice day!';
+const DIALOG_SHUTDOWN = ' Thanks for playing...Have a nice day!';
 
 const MOVES = [
   'rock',
@@ -95,31 +95,33 @@ const handlers = {
   'LaunchRequest': function () {
     // On skill launch, ask user what move s/he wants to make
     // .listen() -- reprompt user
-    // let welcomeDialog;
+    let welcomeDialog;
 
-    // // Randomly decided if Alexa plays RPS or refuses
-    // if (!random(ALEXA_PLAYS)) {
-    //   welcomeDialog = random(DIALOG_REFUSE);
-    // }
+    // Randomly decided if Alexa plays RPS or refuses
+    if (!random(ALEXA_PLAYS)) {
+      welcomeDialog = random(DIALOG_REFUSE);
+      this.response.speak(welcomeDialog);   // No .listen() so skill properly shuts down
+    }
 
-    // // Good luck
-    // else {
-    //   welcomeDialog = random(DIALOG_MOVE_PROMPT);
-    // }
+    // Good luck
+    else {
+      // Requests user's move. User's answer activates the MoveSubmitIntent
+      welcomeDialog = random(DIALOG_MOVE_PROMPT);
+      this.response.speak(welcomeDialog).listen(HELP_REPROMPT);
+    }
 
-    // this.response.speak(welcomeDialog).listen(HELP_REPROMPT);
-    // this.emit(':responseReady');
+    this.emit(':responseReady');
 
-    readDynamoItem(params, myResult=>{
-            var say = '';
+    // readDynamoItem(params, myResult=>{
+    //         var say = '';
 
-            say = myResult;
+    //         say = myResult;
 
-            say = 'Your name is: ' + myResult;
-            this.response.speak(say);
-            this.emit(':responseReady');
+    //         say = 'Your name is: ' + myResult;
+    //         this.response.speak(say);
+    //         this.emit(':responseReady');
 
-        });
+    //     });
 
   },
   'MoveSubmitIntent': function () {
@@ -129,11 +131,8 @@ const handlers = {
     let alexaMove = random(MOVES);
     let speechOutput =  'I played ' + alexaMove + ' against your ' + userMove + '. ';
 
-    // TODO:: Implement game logic. For ex,
-    // if userMove === scissors and alexaMove === rock, add a "you lose" dialog to the speech output
-
-    // Determines winner and constructs the appropriate response
-    speechOutput += determineWinner(userMove, alexaMove);
+    // Game logic -- determines winner and constructs the appropriate response
+    speechOutput += determineWinner(userMove, alexaMove) + DIALOG_SHUTDOWN;
 
     this.response.cardRenderer(SKILL_NAME, speechOutput);
     this.response.speak(speechOutput);
@@ -147,11 +146,11 @@ const handlers = {
     this.emit(':responseReady');
   },
   'AMAZON.CancelIntent': function () {
-    this.response.speak(STOP_MESSAGE);
+    this.response.speak(DIALOG_SHUTDOWN);
     this.emit(':responseReady');
   },
   'AMAZON.StopIntent': function () {
-    this.response.speak(STOP_MESSAGE);
+    this.response.speak(DIALOG_SHUTDOWN);
     this.emit(':responseReady');
   },
 };
@@ -211,10 +210,8 @@ function determineWinner(userMove, alexaMove) {
     return random(DIALOG_LOSE);
   }
 
-} 
+}
 
-// HELPER FUNCTION
-// COLLECTS THE DATA ASSOCIATED WITH "message" FROM THE KEY "value"
 function readDynamoItem(params, callback) {
 
     var AWS = require('aws-sdk');
