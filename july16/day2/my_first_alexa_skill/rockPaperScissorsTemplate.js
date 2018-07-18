@@ -29,7 +29,7 @@ const handlers = {
 
         let randomIndex = Math.floor(Math.random() * MOVES.length);
         let randomMove = MOVES[randomIndex];
-        let speechOutput =  'I played ' + randomMove + ' against your ' + userMove;
+        let speechOutput =  'I played ' + randomMove + ' against your ' + userMove + '. ';
 
         // TODO:: Implement game logic. For ex,
         // if userMove === scissors and alexaMove === rock, add a "you lose" dialog to the speech output
