@@ -17,7 +17,7 @@ function getURL() {
     // callback, do search(data)
     search(dataReturnedFromServer);
   });
-  
+
 }
 
 // Function search()
@@ -27,11 +27,13 @@ function search(data) {
   // console.log('WEATHER: ' +  data );
   // This approach failed....
   // let data = $(response).find('.lqhpac span');
-  
+
   //  ....so we tried string manipulation
   // SEARCH AND CLEAN
-  let condition = data.split('wob_dc')[4].split('">')[1].split('</span>')[0];
+  // let condition = data.split('wob_dc')[4].split('">')[1].split('</span>')[0];
 
+  // Lololol just split left and right
+  let condition = data.split('vk_gy vk_sh" id="wob_dc">')[1].split('<')[0];
   // console.log( condition );
 
   // DISPLAY
