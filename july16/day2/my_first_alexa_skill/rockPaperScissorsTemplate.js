@@ -1,6 +1,7 @@
 'use strict';
 const Alexa = require('alexa-sdk');
 
+// INITIALIZE DYNAMODB
 const AWSregion = 'us-east-1';
 const params = {
     TableName: 'myName',
@@ -11,6 +12,7 @@ const AWS = require('aws-sdk');
 AWS.config.update({
     region: AWSregion
 });
+// END INIT
 
 //Replace with your app ID (OPTIONAL).  You can find this value at the top of your skill's page on http://developer.amazon.com.
 //Make sure to enclose your value in quotes, like this: const APP_ID = 'amzn1.ask.skill.bb4045e6-b3e8-4133-b650-72923c5980f1';
@@ -209,8 +211,10 @@ function determineWinner(userMove, alexaMove) {
     return random(DIALOG_LOSE);
   }
 
-} //
+} 
 
+// HELPER FUNCTION
+// COLLECTS THE DATA ASSOCIATED WITH "message" FROM THE KEY "value"
 function readDynamoItem(params, callback) {
 
     var AWS = require('aws-sdk');
