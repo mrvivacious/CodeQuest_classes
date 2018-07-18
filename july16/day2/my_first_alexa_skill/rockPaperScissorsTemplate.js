@@ -103,7 +103,7 @@ const handlers = {
     let userMove = this.event.request.intent.slots.move.value;
 
     let alexaMove = random(MOVES);
-    let speechOutput =  'I played ' + randomMove + ' against your ' + userMove + '. ';
+    let speechOutput =  'I played ' + alexaMove + ' against your ' + userMove + '. ';
 
     // TODO:: Implement game logic. For ex,
     // if userMove === scissors and alexaMove === rock, add a "you lose" dialog to the speech output
