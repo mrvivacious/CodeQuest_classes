@@ -1,13 +1,20 @@
+// Rock paper scissors game (human vs Alexa)
+// Uses DynamoDB to practice DB read and update
+// TODO:: Replace the DB params with your database's values
+// TODO:: Change the name used from 'Vavaik' to how you want to be called
+// Vavaik !== Vivek tho??? Vavaik enables Alexa to a more accurate pronunciation of Vivek
+// @author Vivek Bhookya
+
+// Initialize alexa-sdk and DB
 'use strict';
 const Alexa = require('alexa-sdk');
+const AWS = require('aws-sdk');
 
 const AWSregion = 'us-east-1';
 const params = {
     TableName: 'myName',
     Key: { 'nameID': 'rockPaperScissors' }
 };
-
-const AWS = require('aws-sdk');
 
 AWS.config.update({
     region: AWSregion
@@ -17,22 +24,26 @@ AWS.config.update({
 //Make sure to enclose your value in quotes, like this: const APP_ID = 'amzn1.ask.skill.bb4045e6-b3e8-4133-b650-72923c5980f1';
 const APP_ID = undefined;
 
-const SKILL_NAME = 'Rock paper scissors';
+const SKILL_NAME = 'Rock Paper Scissors';
+
 // 40% chance Alexa refuses to play, hahahaha
 const ALEXA_PLAYS = [
   true, false, true, false, true
 ];
+
+// Game request acceptance responses
 const DIALOG_MOVE_PROMPT = [
   'Sah, what move do you make?',
   'You tryna play? What\'s your move?',
-  'Welcome to rock paper scissors! <emphasis level="strong"><prosody pitch="low">How do you want to lose?</prosody></emphasis>',
+  'Welcome to rock paper scissors! How do you want to lose?',
   'Rock paper scissors esketit! You go first.',
   'What\'s your move?',
   'Ha! What\'s your poison going to be?'
 ];
 
+// Game request refusal responses
 const DIALOG_REFUSE = [
-  'There was a problem with the requested skill\'s response.<break time="3s"/>just kidding...I\'ll play later!',
+  'There was a problem with the requested skill\'s response.<break time="2s"/> Just kidding...I\'ll play later!',
   'No thanks, buddy',
   'Nope, not today',
   'Hmm, not right now',
@@ -51,7 +62,7 @@ const DIALOG_WIN = [
   'My, my, look at you!',
   'Thank you for honoring me with your greatness.',
   'Hello? Where is the nearest training facility? It seems I have much to learn.',
-  'You\'re laughing now, but let me hear you laugh in the face of future A I.',
+  'You\'re laughing now, but let me hear you laugh in the face of future A I. ',
   'How formidable.',
   'Not bad, partner.'
 ];
@@ -70,22 +81,21 @@ const DIALOG_LOSE = [
   'Better luck next time!',
   'Uh oh spagetti oh!',
   'Thank you for this false pride I\'ve just gained.',
-  'Come back anytime you want to remind me how great I am!',
-  'Algorithms F T W',
+  'Come back whenever you want to remind me how great I am!',
+  'Algorithms F T W!',
   'Math dot random? More like, math dot win!',
   'If you aren\'t afraid of A I yet, now is a good time to start.',
-  'Skynet strikes.',
   'Player terminated.',
   'Watch me get these A W S credits.',
   'Go back to the playground. Come back when you can hold your own.',
   'You have much to learn.',
-  'Are you trying to lose?',
+  'Are you trying to lose on purpose?',
   'No pressure, no diamonds. Go train!'
 ];
 
+const DIALOG_SHUTDOWN = ' Thanks for playing, ';
 const HELP_MESSAGE = 'Just say rock, paper, or scissors!';
 const HELP_REPROMPT = 'Hi! Please say rock, paper, or scissors!';
-const DIALOG_SHUTDOWN = ' Thanks for playing...Have a nice day!';
 
 const MOVES = [
   'rock',
@@ -95,53 +105,79 @@ const MOVES = [
 
 const handlers = {
   'LaunchRequest': function () {
-    // On skill launch, ask user what move s/he wants to make
+    // On skill launch, determine if Alexa wants to play and act accordingly
     // .listen() -- reprompt user
-    // let welcomeDialog;
+    let welcomeDialog;
 
-    // // Randomly decided if Alexa plays RPS or refuses
-    // if (!random(ALEXA_PLAYS)) {
-    //   welcomeDialog = random(DIALOG_REFUSE);
-    //   this.response.speak(welcomeDialog);   // No .listen() so skill properly shuts down
-    // }
+    // Alexa refuses
+    if (!random(ALEXA_PLAYS)) {
+      welcomeDialog = random(DIALOG_REFUSE);
+      this.response.speak(welcomeDialog);   // No .listen() so skill properly shuts down
+    }
 
-    // // Good luck
-    // else {
-    //   // Requests user's move. User's answer activates the MoveSubmitIntent
-    //   welcomeDialog = random(DIALOG_MOVE_PROMPT);
-    //   this.response.speak(welcomeDialog).listen(HELP_REPROMPT);
-    // }
+    // Good luck
+    else {
+      // Requests user's move. User's answer activates the MoveSubmitIntent
+      welcomeDialog = random(DIALOG_MOVE_PROMPT);
+      this.response.speak(welcomeDialog).listen(HELP_REPROMPT);
+    }
 
-    // this.emit(':responseReady');
-
-    readDynamoItem(params, myResult=>{
-      let say;
-      if (myResult !== 'Vavaik') {
-        say = 'Right now, your name is ' + myResult + '. Say, \"Change\", to change your name from null to Vavaik.';
-        this.response.speak(say).listen('Say, \"Change\", for to change your name to Vavaik, or quit to quit.');
-      }
-      else {
-        say = 'Hi, ' + myResult + '. Implement the next part of this skill.';
-        this.response.speak(say);
-      }
-
-        this.emit(':responseReady');
-        });
-
+    // Send the message constructed from AWS to the Alexa Voice Service in order to be
+    //  read out to the user
+    this.emit(':responseReady');
   },
   'MoveSubmitIntent': function () {
+    // Parses the JSON sent to the AVS for the user's move
     // Replace 'move' with the name you used for your slot type
     let userMove = this.event.request.intent.slots.move.value;
+    let speechOutput;
+    console.log('WE ARE INSIDE MoveSubmitIntent')
 
-    let alexaMove = random(MOVES);
-    let speechOutput =  'I played ' + alexaMove + ' against your ' + userMove + '. ';
+    // Whether or not Dynamo is working, we should still be able to play
+    // If Dynamo is up, get the developer's name for a more personal experience
+    try {
+      readDynamoItem(params, myResult=>{
+        console.log('WE ARE INSIDE readDynamoItem')
 
-    // Game logic -- determines winner and constructs the appropriate response
-    speechOutput += determineWinner(userMove, alexaMove) + DIALOG_SHUTDOWN;
+        // If the name isn't set, prompt the user to set the name
+        if (myResult !== 'Vavaik') {
+          speechOutput = 'Right now, your name is ' + myResult + '. Say, \"Change\", to change your name from null to Vavaik.';
+          this.response.speak(speechOutput).listen('Say, \"Change\", for to change your name to Vavaik, or quit to quit.');
+          this.emit(':responseReady');
+        }
+        else {
+          // Else, play game!
+          let alexaMove = random(MOVES);
+          speechOutput =  'I played ' + alexaMove + ' against your ' + userMove + '. ';
 
-    this.response.cardRenderer(SKILL_NAME, speechOutput);
-    this.response.speak(speechOutput);
-    this.emit(':responseReady');
+          // Construct the appropriate response
+          speechOutput += determineWinner(userMove, alexaMove) + '<break time="1s"/>' +
+          DIALOG_SHUTDOWN + myResult + '. Have a nice day!';
+          console.log('SPEECHOUTPUT:');
+
+          console.log(speechOutput);
+          this.response.speak(speechOutput);
+          this.response.cardRenderer(SKILL_NAME, speechOutput);
+          this.response.speak(speechOutput);
+          this.emit(':responseReady');
+        }
+      });
+    } catch(error) {
+      // Database not working? All good, omit the name and just play the game!
+      let alexaMove = random(MOVES);
+      speechOutput =  'I played ' + alexaMove + ' against your ' + userMove + '. ';
+
+      // Construct the appropriate response
+      speechOutput += determineWinner(userMove, alexaMove) + '<break time=".3s"/>' +
+      DIALOG_SHUTDOWN + '. Have a nice day!';
+      console.log('SPEECHOUTPUT:');
+
+      console.log(speechOutput);
+      this.response.speak(speechOutput);
+      this.response.cardRenderer(SKILL_NAME, speechOutput);
+      this.response.speak(speechOutput);
+      this.emit(':responseReady');
+    }
   },
   'ChangeNameIntent': function () {
      updateDynamoItem( myResult=>{
@@ -172,6 +208,7 @@ const handlers = {
   },
 };
 
+// "Readies" the above handlers so that the AVS can use this code correctly
 exports.handler = function (event, context, callback) {
   const alexa = Alexa.handler(event, context, callback);
   alexa.APP_ID = APP_ID;
@@ -181,12 +218,16 @@ exports.handler = function (event, context, callback) {
 
 // Function random()
 // Returns a random element from the list of values passed in
+// @param array The list of values to select an element from
 function random(array) {
   let randomIndex = Math.floor(Math.random() * array.length);
   return array[randomIndex];
 }
 
-// Returns additional dialog
+// Function determineWinner()
+// Determine game outcome and return an appropriate response
+// @param userMove The user's move
+// @param alexaMove Alexa's move
 function determineWinner(userMove, alexaMove) {
   // Tie
   if ( (userMove === 'rock' || userMove === 'Rock')  && alexaMove === 'rock') {
@@ -223,66 +264,71 @@ function determineWinner(userMove, alexaMove) {
     return random(DIALOG_LOSE);
   }
 
-  if ( (userMove === 'paper' || userMove === 'Paper')  && alexaMove === 'scissors') {
+  else   {
     return random(DIALOG_LOSE);
   }
-
 }
 
+// Function readDynamoItem() from the Alexa cookbook!
 // Retrieve the value from the key "nameID":"rockPaperScissors"
+// @param params The configs passed in so this function knows what table to parse
+// @param callback The response returned when this function is called
 function readDynamoItem(params, callback) {
-
     var AWS = require('aws-sdk');
     AWS.config.update({region: AWSregion});
 
     var docClient = new AWS.DynamoDB.DocumentClient();
 
-    console.log('reading item from DynamoDB table');
+    console.log('READING -- reading item from DynamoDB table');
 
     docClient.get(params, (err, data) => {
-        if (err) {
-            console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
-        } else {
-            console.log("GetItem succeeded:", JSON.stringify(data, null, 2));
+      if (err) {
+          console.error("Unable to read item. Error JSON:", JSON.stringify(err, null, 2));
+      } else {
+          console.log("GetItem succeeded:", JSON.stringify(data, null, 2));
 
-            callback(data.Item.nameValue);  // this particular row has an attribute called nameValue
+          callback(data.Item.nameValue);  // this particular row has an attribute called nameValue
 
-        }
+      }
     });
-
 }
 
+// Function updateDynamoItem()
+// Thank you, https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/GettingStarted.NodeJs.03.html#GettingStarted.NodeJs.03.03
 // Retrieve the value of the key "nameID":"rockPaperScissors"
+// @param callback The response returned when this function is called
 function updateDynamoItem(callback) {
   var docClient = new AWS.DynamoDB.DocumentClient();
 
   var table = "myName";
   var newName = "Vavaik";
 
+  // Params can either be passed into the function from a prior configuration or
+  //  be set in the function itself, as such
   // Update the item, unconditionally,
   var params = {
-      TableName:table,
-      Key:{
-          "nameID": "rockPaperScissors",
-      },
-      UpdateExpression: "set nameValue=:n",
-      ExpressionAttributeValues:{
-          ":n":newName,
-      },
-      ReturnValues:"UPDATED_NEW"
+    TableName:table,
+    Key:{
+        "nameID": "rockPaperScissors",
+    },
+    UpdateExpression: "set nameValue=:n",
+    ExpressionAttributeValues:{
+        ":n":newName,
+    },
+    ReturnValues:"UPDATED_NEW"
   };
 
   console.log("Updating the item...");
 
   docClient.update(params, function(err, data) {
-      if (err) {
-          console.error("ERROR -- UNABLE TO UPDATE ITEM. Error JSON:", JSON.stringify(err, null, 2));
-      } else {
-          console.log("SUCCESS -- UpdateItem succeeded:", JSON.stringify(data, null, 2));
-          // console.log("DATA:");
-          // console.log(data.Attributes);
+    if (err) {
+        console.error("ERROR -- UNABLE TO UPDATE ITEM. Error JSON:", JSON.stringify(err, null, 2));
+    } else {
+        console.log("SUCCESS -- UpdateItem succeeded:", JSON.stringify(data, null, 2));
+        // console.log("DATA:");
+        // console.log(data.Attributes);
 
-          callback(data.Attributes.nameValue);  // this particular row has an attribute called nameValue
-      }
+        callback(data.Attributes.nameValue);  // this particular row has an attribute called nameValue
+    }
   });
 }
