@@ -255,15 +255,7 @@ function determineWinner(userMove, alexaMove) {
     return random(DIALOG_WIN);
   }
 
-  // Alexa wins ie User loses
-  if ( (userMove === 'rock' || userMove === 'Rock')  && alexaMove === 'paper') {
-    return random(DIALOG_LOSE);
-  }
-
-  if ( (userMove === 'scissors' || userMove === 'Scissors')  && alexaMove === 'rock') {
-    return random(DIALOG_LOSE);
-  }
-
+  // Else, Alexa wins ie User loses
   else   {
     return random(DIALOG_LOSE);
   }
