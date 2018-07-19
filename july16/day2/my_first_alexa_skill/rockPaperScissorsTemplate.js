@@ -4,8 +4,9 @@ const Alexa = require('alexa-sdk');
 const AWSregion = 'us-east-1';
 const params = {
     TableName: 'myName',
-    Key: { 'value': 'Vivek' }
-}
+    Key: { 'nameID': 'rockPaperScissors' }
+};
+
 const AWS = require('aws-sdk');
 
 AWS.config.update({
@@ -31,6 +32,7 @@ const DIALOG_MOVE_PROMPT = [
 ];
 
 const DIALOG_REFUSE = [
+  'There was a problem with the requested skill\'s response.<break time="3s"/>just kidding...I\'ll play later!',
   'No thanks, buddy',
   'Nope, not today',
   'Hmm, not right now',
@@ -95,33 +97,36 @@ const handlers = {
   'LaunchRequest': function () {
     // On skill launch, ask user what move s/he wants to make
     // .listen() -- reprompt user
-    let welcomeDialog;
+    // let welcomeDialog;
 
-    // Randomly decided if Alexa plays RPS or refuses
-    if (!random(ALEXA_PLAYS)) {
-      welcomeDialog = random(DIALOG_REFUSE);
-      this.response.speak(welcomeDialog);   // No .listen() so skill properly shuts down
-    }
+    // // Randomly decided if Alexa plays RPS or refuses
+    // if (!random(ALEXA_PLAYS)) {
+    //   welcomeDialog = random(DIALOG_REFUSE);
+    //   this.response.speak(welcomeDialog);   // No .listen() so skill properly shuts down
+    // }
 
-    // Good luck
-    else {
-      // Requests user's move. User's answer activates the MoveSubmitIntent
-      welcomeDialog = random(DIALOG_MOVE_PROMPT);
-      this.response.speak(welcomeDialog).listen(HELP_REPROMPT);
-    }
+    // // Good luck
+    // else {
+    //   // Requests user's move. User's answer activates the MoveSubmitIntent
+    //   welcomeDialog = random(DIALOG_MOVE_PROMPT);
+    //   this.response.speak(welcomeDialog).listen(HELP_REPROMPT);
+    // }
 
-    this.emit(':responseReady');
+    // this.emit(':responseReady');
 
-    // readDynamoItem(params, myResult=>{
-    //         var say = '';
+    readDynamoItem(params, myResult=>{
+      let say;
+      if (myResult !== 'Vavaik') {
+        say = 'Right now, your name is ' + myResult + '. Say, \"Change\", to change your name from null to Vavaik.';
+        this.response.speak(say).listen('Say, \"Change\", for to change your name to Vavaik, or quit to quit.');
+      }
+      else {
+        say = 'Hi, ' + myResult + '. Implement the next part of this skill.';
+        this.response.speak(say);
+      }
 
-    //         say = myResult;
-
-    //         say = 'Your name is: ' + myResult;
-    //         this.response.speak(say);
-    //         this.emit(':responseReady');
-
-    //     });
+        this.emit(':responseReady');
+        });
 
   },
   'MoveSubmitIntent': function () {
@@ -137,6 +142,18 @@ const handlers = {
     this.response.cardRenderer(SKILL_NAME, speechOutput);
     this.response.speak(speechOutput);
     this.emit(':responseReady');
+  },
+  'ChangeNameIntent': function () {
+     updateDynamoItem( myResult=>{
+       if (myResult === 'Vavaik') {
+         this.response.speak('Name changed successfully to ' + myResult);
+       }
+       else {
+         this.response.speak('Something not right');
+       }
+
+       this.emit(':responseReady');
+     });
   },
   'AMAZON.HelpIntent': function () {
     const speechOutput = HELP_MESSAGE;
@@ -212,6 +229,7 @@ function determineWinner(userMove, alexaMove) {
 
 }
 
+// Retrieve the value from the key "nameID":"rockPaperScissors"
 function readDynamoItem(params, callback) {
 
     var AWS = require('aws-sdk');
@@ -227,9 +245,44 @@ function readDynamoItem(params, callback) {
         } else {
             console.log("GetItem succeeded:", JSON.stringify(data, null, 2));
 
-            callback(data.Item.message);  // this particular row has an attribute called value
+            callback(data.Item.nameValue);  // this particular row has an attribute called nameValue
 
         }
     });
 
+}
+
+// Retrieve the value of the key "nameID":"rockPaperScissors"
+function updateDynamoItem(callback) {
+  var docClient = new AWS.DynamoDB.DocumentClient();
+
+  var table = "myName";
+  var newName = "Vavaik";
+
+  // Update the item, unconditionally,
+  var params = {
+      TableName:table,
+      Key:{
+          "nameID": "rockPaperScissors",
+      },
+      UpdateExpression: "set nameValue=:n",
+      ExpressionAttributeValues:{
+          ":n":newName,
+      },
+      ReturnValues:"UPDATED_NEW"
+  };
+
+  console.log("Updating the item...");
+
+  docClient.update(params, function(err, data) {
+      if (err) {
+          console.error("ERROR -- UNABLE TO UPDATE ITEM. Error JSON:", JSON.stringify(err, null, 2));
+      } else {
+          console.log("SUCCESS -- UpdateItem succeeded:", JSON.stringify(data, null, 2));
+          // console.log("DATA:");
+          // console.log(data.Attributes);
+
+          callback(data.Attributes.nameValue);  // this particular row has an attribute called nameValue
+      }
+  });
 }
