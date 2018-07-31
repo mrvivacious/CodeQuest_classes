@@ -1,0 +1,51 @@
+<!doctype html>
+<!--
+ This page is shown when the extension button is clicked, because the
+ "browser_action" field in manifest.json contains the "default_popup" key with
+ value "popup.html".
+ -->
+<html>
+
+<head>
+  <title>Rock paper scissors</title>
+
+  <link href="styles.css" rel="stylesheet" type="text/css"/>
+
+  <!--
+      - JavaScript and HTML must be in separate files: see our Content Security
+      - Policy documentation[1] for details and explanation.
+      -
+      - [1]: https://developer.chrome.com/extensions/contentSecurityPolicy
+    -->
+  <script src="aws.min.js"></script>
+  <script src="jquery.min.js"></script>
+  <script src="backend.js"></script>
+
+</head>
+
+<body>
+  <h1>RPS Demo</h1>
+  <div id="container">
+
+      <div class="vertical-menu">
+          <!-- <div id="nameForm">
+            <input id="INPUT_name" type="text" name="Your name?" placeholder="What's your name?" value="">
+            <button id="submitName" type="submit" name="button">Save!</button>
+          </div> -->
+          <hr>
+          <p>Status of you: <span id="STATUS_me">null</span></p>
+          <p>Status of other player: <span id="STATUS_you">null</span></p>
+
+          <p>Result of game: <span id="RESULT">null</span></p>
+
+          <hr>
+          <img class="MOVE" id="rock" src="imgs/rock.jpg" alt="rock" width="30%">
+          <img class="MOVE" id="paper" src="imgs/paper.jpg" alt="paper" width="30%">
+          <img class="MOVE" id="scissors" src="imgs/scissors.jpg" alt="scissors" width="30%">
+          <hr>
+
+      </div>
+  </div>
+</body>
+
+</html>

@@ -1,0 +1,31 @@
+{
+  "manifest_version": 2,
+
+  "name": "RPS DB Demo",
+  "description": "rps w db",
+  "version": "0.0.0.1",
+  "author": "Vivek Bhookya",
+
+  "browser_action": {
+    "default_popup": "popup.html",
+    "default_title": "Web Info"
+  },
+
+  "background": {
+      "scripts": ["aws.min.js", "jquery.min.js", "backend.js"],
+      "persistent": false
+      },
+
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["aws.min.js", "jquery.min.js", "backend.js"],
+      "run_at": "document_end"
+    }
+  ],
+
+  "permissions": [
+    "activeTab",
+    "storage"
+  ]
+}

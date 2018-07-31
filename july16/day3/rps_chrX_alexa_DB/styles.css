@@ -51,11 +51,12 @@ a:hover {
     /*text-decoration: underline;*/
 }
 
-li:hover {
-  cursor:pointer;
+.MOVE:hover {
+  cursor: pointer;
 }
+
 /* https://www.w3schools.com/howto/howto_css_vertical_menu.asp */
 .vertical-menu {
-/* width: 250px; */
+width: 250px;
 display: block; /* Make the links appear below each other */
 }
