@@ -1,4 +1,6 @@
-// Activates the function
+// Check time every 30 seconds (leave this tab running in the background)
+// If min = 1000 * 1, for example, a new window would open every 1000 * 1 ms
+//  aka every one second
 var min = 1000 * 30;
 setInterval(hi, min);
 
@@ -13,9 +15,11 @@ function hi() {
   let hours = d.getHours();
   let min = d.getMinutes();
 
+  // Current time as a string
   let ourTime = hours + ':' + min;
   let len = endTimes.length;
 
+  // Check current time with saved times 
   for (let index = 0; index < len; index++) {
     if ( endTimes[index] === ourTime ) {
       window.open('warning.html');
